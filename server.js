@@ -1,20 +1,26 @@
+//node modules to require
 var http = require('http');
 var fs = require('fs');
 var querystring = require('querystring');
 
+//creates server
 var server = http.createServer(connection);
 
+//what to do upon connection
 function connection(request, response) {
+
+  //extract method, url, and fileType from request
   var method = request.method;
-  console.log(method);
   var url = request.url.split('.');
   var fileType = url[1];
   url = url.join('.');
-  console.log(url);
-  console.log(fileType);
+
+  //define variables to use for
   var body = "";
   var postObj;
   var newDoc;
+
+  //GET method for everything but index.html
   if (method === "GET" && url !== "/index.html"){
     response.writeHead(200, {
       'Content-Type' : "text/" + fileType
@@ -24,6 +30,8 @@ function connection(request, response) {
       response.end(data);
       });
   }
+
+  //GET index.html and update in accordance with total element files
   if (method === "GET" && url === "/index.html"){
     response.writeHead(200, {
       'Content-Type' : "text/" + fileType
@@ -42,7 +50,6 @@ function connection(request, response) {
         var links = "";
         for(var k = 0; k < elementFiles.length; k++) {
           var name = elementFiles[k].split('.')[0];
-          //elementFiles[k].join('.');
           links += "<li>\n\t<a href=\'./" + elementFiles[k] + "\'>" + name + "</a>\n</li>\n";
         }
         index = index[0] + links + index[1];
@@ -56,6 +63,8 @@ function connection(request, response) {
             });
       });
   }
+
+  //POST method that only creates new files if they do not exist
   if (method === "POST" && url === '/elements'){
     request.on('data', function(chunk){
       postObj = querystring.parse(chunk.toString());
@@ -81,6 +90,8 @@ function connection(request, response) {
       });
     });
   }
+
+  //PUT method for if the file exists, actually overwrites it
   if (method === "PUT"){
     request.on('data', function(chunk){
       postObj = querystring.parse(chunk.toString());
@@ -105,6 +116,8 @@ function connection(request, response) {
       });
     });
   }
+
+  //DELETE method unlinks file if it exists
   if(method === "DELETE"){
     fs.unlink('./public' + url, function(err){
       if(err){
@@ -117,6 +130,7 @@ function connection(request, response) {
   }
 }
 
+//defines what port server will listen on when run
 server.listen({
   host : "localhost",
   port : 8080
